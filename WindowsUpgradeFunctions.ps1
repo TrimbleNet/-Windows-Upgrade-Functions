@@ -668,7 +668,6 @@ function Start-Win10UpgradeCAB{
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$false)] 
-        [ValidateSet("1909","2109")]
         [String] $Version = "2109",
         [Parameter(Mandatory=$false)] 
         [Boolean] $Reboot = $true,
@@ -695,4 +694,42 @@ function Start-Win10UpgradeCAB{
     }
 }
 
-#11.5
+function Start-Win11UpgradeCAB{
+    <#
+    .SYNOPSIS
+        This function downloads the feature enablement package cab file and runs it silently using dism.exe.
+    .NOTES
+        Version:        1.0
+        Author:         Andy Escolastico
+        Creation Date:  06/11/2020
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false)] 
+        [String] $Version = "2109",
+        [Parameter(Mandatory=$false)] 
+        [Boolean] $Reboot = $true,
+        [Parameter(Mandatory=$false)]
+        [String] $DLPath = (Get-Location).Path,
+        [Parameter(Mandatory=$false)] 
+        [String] $LogPath = (Get-Location).Path
+    )
+    if(!(Test-Path -Path $DLPath)){$null = New-Item -ItemType directory -Path $DLPath -Force}   
+    if(!(Test-Path -Path $LogPath)){$null = New-Item -ItemType directory -Path $LogPath -Force}    
+    if($Version -eq "1909"){
+        $DLLink = 'http://b1.download.windowsupdate.com/d/upgr/2019/11/windows10.0-kb4517245-x64_4250e1db7bc9468236c967c2c15f04b755b3d3a9.cab'
+    }
+    if($Version -eq "2109"){
+        $DLLink = 'http://b1.download.windowsupdate.com/d/upgr/2021/11/windows10.0-kb5003791-x64_73ea2c9804395921aa91a4ceea212a8282b55a84.cab'
+    }
+    $PackagePath = "$DLPath\Win11_CAB.cab"
+    $LogPath = "$LogPath\Win11_CAB.log"
+    (New-Object System.Net.WebClient).DownloadFile($DLLink, "$PackagePath")
+    if ($Reboot -eq $true){
+        Invoke-Expression "DISM.exe /Online /Add-Package /Quiet /PackagePath:$PackagePath /LogPath:$LogPath"
+    } else{
+        Invoke-Expression "DISM.exe /Online /Add-Package /Quiet /NoRestart /PackagePath:$PackagePath /LogPath:$LogPath"
+    }
+}
+
+#11.6
